@@ -9,7 +9,7 @@ interface ChartProps {
 
 export function WeightChart({ data, yAxisLabels = ["75kg", "70kg", "65kg", "60kg"] }: ChartProps) {
   return (
-    <div className="h-64 relative">
+    <div className="h-full relative">
       {/* Chart Container */}
       <div className="absolute inset-0 flex items-end justify-between px-2">
         {data.map((item, index) => (
