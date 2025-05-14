@@ -88,7 +88,11 @@ export class MemStorage implements IStorage {
 
   // User methods
   async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+    const user = this.users.get(id);
+    if (user && typeof user.createdAt === "string") {
+      return { ...user, createdAt: new Date(user.createdAt) };
+    }
+    return user;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
@@ -102,7 +106,8 @@ export class MemStorage implements IStorage {
     const newUser: User = { 
       ...user, 
       id,
-      createdAt: new Date()
+      createdAt: new Date().toISOString(),
+      avatar: user.avatar ?? null,
     };
     this.users.set(id, newUser);
     return newUser;
@@ -110,14 +115,27 @@ export class MemStorage implements IStorage {
 
   // Health Metrics methods
   async getHealthMetrics(userId: number): Promise<HealthMetric[]> {
-    return Array.from(this.healthMetrics.values())
+    const metrics = Array.from(this.healthMetrics.values())
       .filter(metric => metric.userId === userId)
       .sort((a, b) => new Date(b.recordedDate).getTime() - new Date(a.recordedDate).getTime());
+    return metrics.map(m => ({
+      ...m,
+      recordedDate: typeof m.recordedDate === "string" ? new Date(m.recordedDate) : m.recordedDate,
+      createdAt: typeof m.createdAt === "string" ? new Date(m.createdAt) : m.createdAt,
+    }));
   }
 
   async getLatestHealthMetric(userId: number): Promise<HealthMetric | undefined> {
     const metrics = await this.getHealthMetrics(userId);
-    return metrics.length > 0 ? metrics[0] : undefined;
+    if (metrics.length > 0) {
+      const m = metrics[0];
+      return {
+        ...m,
+        recordedDate: typeof m.recordedDate === "string" ? new Date(m.recordedDate) : m.recordedDate,
+        createdAt: typeof m.createdAt === "string" ? new Date(m.createdAt) : m.createdAt,
+      };
+    }
+    return undefined;
   }
 
   async createHealthMetric(metric: InsertHealthMetric): Promise<HealthMetric> {
@@ -140,14 +158,25 @@ export class MemStorage implements IStorage {
 
   // Diet Plan methods
   async getDietPlans(userId: number): Promise<DietPlan[]> {
-    return Array.from(this.dietPlans.values())
+    const plans = Array.from(this.dietPlans.values())
       .filter(plan => plan.userId === userId)
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return plans.map(p => ({
+      ...p,
+      createdAt: typeof p.createdAt === "string" ? new Date(p.createdAt) : p.createdAt,
+    }));
   }
 
   async getCurrentDietPlan(userId: number): Promise<DietPlan | undefined> {
     const plans = await this.getDietPlans(userId);
-    return plans.length > 0 ? plans[0] : undefined;
+    if (plans.length > 0) {
+      const p = plans[0];
+      return {
+        ...p,
+        createdAt: typeof p.createdAt === "string" ? new Date(p.createdAt) : p.createdAt,
+      };
+    }
+    return undefined;
   }
 
   async createDietPlan(plan: InsertDietPlan): Promise<DietPlan> {
@@ -155,7 +184,7 @@ export class MemStorage implements IStorage {
     const newPlan: DietPlan = {
       ...plan,
       id,
-      createdAt: new Date(),
+      createdAt: new Date().toISOString(),
     };
     this.dietPlans.set(id, newPlan);
     return newPlan;
@@ -172,7 +201,7 @@ export class MemStorage implements IStorage {
     const newMeal: Meal = {
       ...meal,
       id,
-      createdAt: new Date(),
+      createdAt: new Date().toISOString(),
     };
     this.meals.set(id, newMeal);
     return newMeal;
@@ -180,30 +209,38 @@ export class MemStorage implements IStorage {
 
   // Workout methods
   async getWorkouts(userId: number): Promise<Workout[]> {
-    return Array.from(this.workouts.values())
+    const workouts = Array.from(this.workouts.values())
       .filter(workout => workout.userId === userId)
       .sort((a, b) => {
         if (a.scheduledDate && b.scheduledDate) {
           return new Date(a.scheduledDate).getTime() - new Date(b.scheduledDate).getTime();
         }
-        return b.createdAt.getTime() - a.createdAt.getTime();
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
       });
+    return workouts.map(w => ({
+      ...w,
+      createdAt: typeof w.createdAt === "string" ? new Date(w.createdAt) : w.createdAt,
+    }));
   }
 
   async getCurrentWorkout(userId: number): Promise<Workout | undefined> {
     const today = new Date().toISOString().split('T')[0];
     
     const workouts = await this.getWorkouts(userId);
-    // Find a workout scheduled for today
-    return workouts.find(w => w.scheduledDate === today) || 
-      // Or return the most recent one
-      (workouts.length > 0 ? workouts[0] : undefined);
+    if (workouts.length > 0) {
+      const w = workouts.find(w => w.scheduledDate === today) || workouts[0];
+      return {
+        ...w,
+        createdAt: typeof w.createdAt === "string" ? new Date(w.createdAt) : w.createdAt,
+      };
+    }
+    return undefined;
   }
 
   async getUpcomingWorkouts(userId: number, limit: number = 5): Promise<Workout[]> {
     const today = new Date().toISOString().split('T')[0];
     
-    return Array.from(this.workouts.values())
+    const workouts = Array.from(this.workouts.values())
       .filter(workout => 
         workout.userId === userId && 
         workout.scheduledDate && 
@@ -216,6 +253,10 @@ export class MemStorage implements IStorage {
         return 0;
       })
       .slice(0, limit);
+    return workouts.map(w => ({
+      ...w,
+      createdAt: typeof w.createdAt === "string" ? new Date(w.createdAt) : w.createdAt,
+    }));
   }
 
   async createWorkout(workout: InsertWorkout): Promise<Workout> {
@@ -223,7 +264,7 @@ export class MemStorage implements IStorage {
     const newWorkout: Workout = {
       ...workout,
       id,
-      createdAt: new Date(),
+      createdAt: new Date().toISOString(),
     };
     this.workouts.set(id, newWorkout);
     return newWorkout;
@@ -240,7 +281,7 @@ export class MemStorage implements IStorage {
     const newExercise: Exercise = {
       ...exercise,
       id,
-      createdAt: new Date(),
+      createdAt: new Date().toISOString(),
     };
     this.exercises.set(id, newExercise);
     return newExercise;
@@ -255,12 +296,16 @@ export class MemStorage implements IStorage {
     }
     
     return articles
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       .slice(0, limit);
   }
 
   async getArticle(id: number): Promise<Article | undefined> {
-    return this.articles.get(id);
+    const article = this.articles.get(id);
+    if (article && typeof article.createdAt === "string") {
+      return { ...article, createdAt: new Date(article.createdAt) };
+    }
+    return article;
   }
 
   async createArticle(article: InsertArticle): Promise<Article> {
@@ -268,7 +313,7 @@ export class MemStorage implements IStorage {
     const newArticle: Article = {
       ...article,
       id,
-      createdAt: new Date(),
+      createdAt: new Date().toISOString(),
     };
     this.articles.set(id, newArticle);
     return newArticle;
@@ -290,7 +335,7 @@ export class MemStorage implements IStorage {
     const newGoal: Goal = {
       ...goal,
       id,
-      createdAt: new Date(),
+      createdAt: new Date().toISOString(),
     };
     this.goals.set(id, newGoal);
     return newGoal;

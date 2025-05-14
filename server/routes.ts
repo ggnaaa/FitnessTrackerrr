@@ -319,7 +319,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         password: "password123",
         name: "User",
         email: "user@example.com",
-        avatar: ""
+        avatar: null
       });
       
       // Create health metrics
