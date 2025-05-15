@@ -327,7 +327,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: user.id,
         weight: 68,
         height: 173,
-        recordedDate: new Date(),
+        recordedDate: new Date().toISOString(),
         calories: 1850,
         activeMinutes: 38
       });
@@ -473,8 +473,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         name: "Lose Weight",
         targetValue: 65,
         currentValue: 68,
-        startDate: new Date(),
-        targetDate: new Date(new Date().setMonth(new Date().getMonth() + 3)),
+        startDate: new Date().toISOString(),
+        targetDate: new Date(new Date().setMonth(new Date().getMonth() + 3)).toISOString(),
         completed: false
       });
       
@@ -503,13 +503,13 @@ function generateRecommendations(healthMetric: any) {
     type: "maintenance",
     calories: 0,
     macros: { protein: 0, carbs: 0, fats: 0 },
-    recommendations: []
+    recommendations: [] as string[]
   };
   
   let workoutRecommendation = {
     type: "balanced",
     frequency: "3-4 times per week",
-    recommendations: []
+    recommendations: [] as string[]
   };
   
   // Calculate base metabolic rate (BMR) using Harris-Benedict Equation

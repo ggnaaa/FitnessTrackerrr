@@ -89,8 +89,12 @@ export class MemStorage implements IStorage {
   // User methods
   async getUser(id: number): Promise<User | undefined> {
     const user = this.users.get(id);
-    if (user && typeof user.createdAt === "string") {
-      return { ...user, createdAt: new Date(user.createdAt) };
+    if (user) {
+      return {
+        ...user,
+        createdAt: typeof user.createdAt === "string" ? new Date(user.createdAt) : user.createdAt,
+        avatar: user.avatar ?? null,
+      };
     }
     return user;
   }
@@ -120,7 +124,7 @@ export class MemStorage implements IStorage {
       .sort((a, b) => new Date(b.recordedDate).getTime() - new Date(a.recordedDate).getTime());
     return metrics.map(m => ({
       ...m,
-      recordedDate: typeof m.recordedDate === "string" ? new Date(m.recordedDate) : m.recordedDate,
+      recordedDate: typeof m.recordedDate === "string" ? m.recordedDate : (m.recordedDate as Date).toISOString(),
       createdAt: typeof m.createdAt === "string" ? new Date(m.createdAt) : m.createdAt,
     }));
   }
@@ -302,8 +306,12 @@ export class MemStorage implements IStorage {
 
   async getArticle(id: number): Promise<Article | undefined> {
     const article = this.articles.get(id);
-    if (article && typeof article.createdAt === "string") {
-      return { ...article, createdAt: new Date(article.createdAt) };
+    if (article) {
+      return {
+        ...article,
+        createdAt: typeof article.createdAt === "string" ? new Date(article.createdAt) : article.createdAt,
+        imageUrl: article.imageUrl ?? null,
+      };
     }
     return article;
   }
