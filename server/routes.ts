@@ -488,6 +488,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Add a simple GET /api route for health check
+  router.get("/", (_req, res) => {
+    res.json({ message: "API is running" });
+  });
+
   // Mount all routes under /api prefix
   app.use("/api", router);
 
